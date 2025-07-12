@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""
+Writing strings to Redis
+"""
+
+from uuid import uuid4
+import redis
+
+
+class Cache:
+    """Cache class to handle Redis operations"""
+
+    def __init__(self):
+        """Initialize the Cache with a Redis connection"""
+        self._redis = redis.Redis()
+
+    def store(self, data: bytes) -> str:
+        """Store data in Redis and return the key"""
+        key = uuid4().__str__()
+        self._redis.set(key, data)
+        return key
+
+    def flush(self):
+        """Flush the Redis instance"""
+        self._redis.flushdb()
