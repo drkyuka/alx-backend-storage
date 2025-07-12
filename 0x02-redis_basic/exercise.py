@@ -23,3 +23,12 @@ class Cache:
     def flush(self):
         """Flush the Redis instance"""
         self._redis.flushdb()
+
+    def get(self, key: str, fn=None):
+        """Retrieve data from Redis and apply a function if provided"""
+        data = self._redis.get(key)
+        if data is None:
+            return None
+        if fn:
+            return fn(data)
+        return data
