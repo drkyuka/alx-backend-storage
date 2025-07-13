@@ -32,3 +32,17 @@ class Cache:
         if fn:
             return fn(data)
         return data
+
+    def get_str(self, key: str) -> str:
+        """Retrieve a string from Redis"""
+        data = self._redis.get(key)
+        if data is None:
+            return ""
+        return str(data.decode("utf-8"))
+
+    def get_int(self, key: str) -> int:
+        """Retrieve an integer from Redis"""
+        data = self._redis.get(key)
+        if data is None:
+            return 0
+        return int(data.decode("utf-8"))
