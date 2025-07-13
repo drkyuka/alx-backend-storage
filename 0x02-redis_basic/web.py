@@ -7,14 +7,14 @@ from typing import Callable
 
 from time import sleep, time
 import threading
-from requests import get
 import redis
+import requests
 
-
+# Create a Redis connection
 r = redis.Redis()
 
 
-def web_tracker(method: callable) -> callable:
+def web_tracker(method: Callable[[str], str]) -> Callable[[str], str]:
     """Decorator to track web requests and cache responses."""
 
     @wraps(method)
@@ -36,7 +36,7 @@ def web_tracker(method: callable) -> callable:
 
 @web_tracker
 def get_page(url: str) -> str:
-    return get(url).text
+    return requests.get(url).text
 
 
 def request_during_sleep(url: str, delay: int):
