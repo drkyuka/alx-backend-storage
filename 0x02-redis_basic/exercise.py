@@ -14,7 +14,8 @@ def count_calls(method):
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """Wrapper function to increment call count."""
-        self._redis.incr(method.__qualname__)
+        key = method.__qualname__
+        self._redis.incr(key)
         return method(self, *args, **kwargs)
 
     return wrapper
