@@ -6,9 +6,11 @@ Main file
 import redis
 
 Cache = __import__("exercise").Cache
+replay = __import__("exercise").replay
 
 cache = Cache()
 
+print(f"{'*' * 20} Task 1 {'*' * 20}\n")
 data = b"hello"
 key = cache.store(data)
 print(key)
@@ -16,6 +18,9 @@ print(key)
 local_redis = redis.Redis()
 print(local_redis.get(key))
 
+cache.flush()
+
+print(f"\n{'*' * 20} Task 2 {'*' * 20}\n")
 TEST_CASES = {b"foo": None, 123: int, "bar": lambda d: d.decode("utf-8")}
 
 for value, fn in TEST_CASES.items():
@@ -29,12 +34,19 @@ for value, fn in TEST_CASES.items():
 
 cache.flush()
 
+print(f"\n{'*' * 20} Task 3 {'*' * 20}\n")
+
 cache.store(b"first")
 print(cache.get(cache.store.__qualname__))
 
 cache.store(b"second")
 cache.store(b"third")
 print(cache.get(cache.store.__qualname__))
+
+
+cache.flush()
+
+print(f"\n{'*' * 20} Task 4 {'*' * 20}\n")
 
 s1 = cache.store("first")
 print(s1)
@@ -48,3 +60,13 @@ outputs = cache._redis.lrange("{}:outputs".format(cache.store.__qualname__), 0, 
 
 print("inputs: {}".format(inputs))
 print("outputs: {}".format(outputs))
+
+
+cache.flush()
+
+print(f"\n{'*' * 20} Task 5 {'*' * 20}\n")
+
+cache.store("foo")
+cache.store("bar")
+cache.store(42)
+replay(cache.store)

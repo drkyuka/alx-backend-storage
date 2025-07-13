@@ -14,8 +14,8 @@ def count_calls(method):
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """Wrapper function to increment call count."""
-        key = method.__qualname__
-        self._redis.incr(key)
+
+        self._redis.incr(method.__qualname__)
         return method(self, *args, **kwargs)
 
     return wrapper
@@ -27,11 +27,15 @@ def call_history(method):
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         """Wrapper function to store call history."""
+
+        # Store the input arguments in a list
         key = method.__qualname__
         self._redis.rpush(f"{key}:inputs", str(args))
 
+        # store the result of the method call
         result = method(self, *args, **kwargs)
         self._redis.rpush(f"{key}:outputs", result)
+
         return result
 
     return wrapper
@@ -82,3 +86,16 @@ class Cache:
         if result is not None and isinstance(result, int):
             return int(result)
         return 0
+
+
+def replay(method):
+    """Display the history of calls to a method."""
+
+    r = redis.Redis()
+    key = method.__qualname__
+    inputs = r.lrange(f"{key}:inputs", 0, -1)
+    outputs = r.lrange(f"{key}:outputs", 0, -1)
+
+    print(f"{key} was called {r.get(key).decode('utf-8')} times:")
+    for _in, _out in zip(inputs, outputs):
+        print(f"{key}(*{_in.decode('utf-8')}) -> {_out.decode('utf-8')}")
