@@ -5,15 +5,14 @@ Writing strings to Redis
 
 from uuid import uuid4
 from functools import wraps
-from typing import Callable, Any
 import redis
 
 
-def count_calls(fn: Callable[..., Any]) -> Callable[..., Any]:
+def count_calls(fn):
     """Decorator to count calls to a function."""
 
     @wraps(fn)
-    def wrapper(self, *args: Any, **kwargs: Any):
+    def wrapper(self, *args, **kwargs):
         key = fn.__qualname__
         self._redis.incr(key)
         return fn(self, *args, **kwargs)
