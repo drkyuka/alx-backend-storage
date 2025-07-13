@@ -2,12 +2,14 @@
 """Implementing an expiring web cache and tracker"""
 
 from functools import wraps
-from time import sleep
-from urllib import response
 from requests import get
 import redis
-import threading
-import time
+
+
+# from time import sleep
+# from urllib import response
+# import threading
+# import time
 
 
 r = redis.Redis()
@@ -36,51 +38,51 @@ def get_page(url: str) -> str:
     return get(url).text
 
 
-def request_during_sleep(url: str, delay: int):
-    """Function to make requests during sleep time in a separate thread."""
-    print(f"Thread started: Making requests every 2 seconds for {delay} seconds...")
+# def request_during_sleep(url: str, delay: int):
+#     """Function to make requests during sleep time in a separate thread."""
+#     print(f"Thread started: Making requests every 2 seconds for {delay} seconds...")
 
-    start_time = time.time()
-    while time.time() - start_time < delay:
-        try:
-            print(f"[Thread] Requesting URL at {time.time():.2f}...")
-            result = get_page(url)
-            print(f"[Thread] Response length: {len(result)} chars")
-            print(f"[Thread] Call count: {r.get(f'count:{url}').decode('utf-8')}")
-            sleep(2)  # Wait 2 seconds between requests
-        except Exception as e:
-            print(f"[Thread] Error: {e}")
-            break
+#     start_time = time.time()
+#     while time.time() - start_time < delay:
+#         try:
+#             print(f"[Thread] Requesting URL at {time.time():.2f}...")
+#             result = get_page(url)
+#             print(f"[Thread] Response length: {len(result)} chars")
+#             print(f"[Thread] Call count: {r.get(f'count:{url}').decode('utf-8')}")
+#             sleep(2)  # Wait 2 seconds between requests
+#         except Exception as e:
+#             print(f"[Thread] Error: {e}")
+#             break
 
-    print("Thread finished.")
+#     print("Thread finished.")
 
 
-if __name__ == "__main__":
-    url = "http://slowwly.robertomurray.co.uk"
-    DELAY = 10
+# if __name__ == "__main__":
+#     url = "http://slowwly.robertomurray.co.uk"
+#     DELAY = 10
 
-    # Initial requests
-    for _ in range(2):
-        get_page(url)
+#     # Initial requests
+#     for _ in range(2):
+#         get_page(url)
 
-    print(f"web data => {r.get(f'{url}')}")
-    print(f"call count => {r.get(f'count:{url}')}")
-    print(f"\nSleeping for {DELAY} seconds...")
-    print(f"Waiting for cache to expire...\n")
+#     print(f"web data => {r.get(f'{url}')}")
+#     print(f"call count => {r.get(f'count:{url}')}")
+#     print(f"\nSleeping for {DELAY} seconds...")
+#     print(f"Waiting for cache to expire...\n")
 
-    # Start a thread to make requests during sleep
-    thread = threading.Thread(target=request_during_sleep, args=(url, DELAY))
-    thread.daemon = True
-    thread.start()
+#     # Start a thread to make requests during sleep
+#     thread = threading.Thread(target=request_during_sleep, args=(url, DELAY))
+#     thread.daemon = True
+#     thread.start()
 
-    sleep(DELAY)  # Wait for the cache to expire
+#     sleep(DELAY)  # Wait for the cache to expire
 
-    # Wait for thread to complete
-    thread.join()
+#     # Wait for thread to complete
+#     thread.join()
 
-    print(f"After {DELAY} seconds:\n")
-    print(f"web data => {r.get(f'{url}')}")
-    print(f"call count => {r.get(f'count:{url}')}")
+#     print(f"After {DELAY} seconds:\n")
+#     print(f"web data => {r.get(f'{url}')}")
+#     print(f"call count => {r.get(f'count:{url}')}")
 
-    r.flushall()  # Clear the Redis database for cleanup
-    print("Cache flushed.")
+#     r.flushall()  # Clear the Redis database for cleanup
+#     print("Cache flushed.")
