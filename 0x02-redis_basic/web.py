@@ -2,13 +2,12 @@
 """Implementing an expiring web cache and tracker"""
 
 from functools import wraps
-from requests import get
-import redis
 
 
 from time import sleep, time
-from urllib import response
 import threading
+from requests import get
+import redis
 
 
 r = redis.Redis()
@@ -40,7 +39,10 @@ def get_page(url: str) -> str:
 
 
 def request_during_sleep(url: str, delay: int):
-    """Function to make requests during sleep time in a separate thread."""
+    """
+    Function to make requests during sleep time in a separate thread.
+    """
+
     print(f"Thread started: Making requests every 2 seconds for {delay} seconds...")
 
     start_time = time()
