@@ -2,6 +2,7 @@
 """Implementing an expiring web cache and tracker"""
 
 from functools import wraps
+from typing import Callable
 
 
 from time import sleep, time
