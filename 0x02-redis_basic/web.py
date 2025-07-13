@@ -6,6 +6,8 @@ from time import sleep
 from urllib import response
 from requests import get
 import redis
+import threading
+import time
 
 
 r = redis.Redis()
@@ -19,16 +21,12 @@ def web_tracker(method):
         # Increment the request count for the URL
         r.incr(f"count:{url}")
 
-        # Check if the response is cached
-        if r.get(f"response:{url}"):
-            return r.get(f"response:{url}").decode("utf-8")
-
         # If not cached, make the request and cache the response
-        response = method(url)
-        r.setex(f"response:{url}", 10, response)
+        if not r.get(f"{url}"):
+            r.setex(f"{url}", 10, method(url))
 
-        # Return the response
-        return response
+        # Return the cached response
+        return r.get(f"{url}").decode("utf-8")
 
     return wrapper
 
@@ -38,20 +36,50 @@ def get_page(url: str) -> str:
     return get(url).text
 
 
+def request_during_sleep(url: str, delay: int):
+    """Function to make requests during sleep time in a separate thread."""
+    print(f"Thread started: Making requests every 2 seconds for {delay} seconds...")
+
+    start_time = time.time()
+    while time.time() - start_time < delay:
+        try:
+            print(f"[Thread] Requesting URL at {time.time():.2f}...")
+            result = get_page(url)
+            print(f"[Thread] Response length: {len(result)} chars")
+            print(f"[Thread] Call count: {r.get(f'count:{url}').decode('utf-8')}")
+            sleep(2)  # Wait 2 seconds between requests
+        except Exception as e:
+            print(f"[Thread] Error: {e}")
+            break
+
+    print("Thread finished.")
+
+
 if __name__ == "__main__":
     url = "http://slowwly.robertomurray.co.uk"
     DELAY = 10
+
+    # Initial requests
     for _ in range(2):
         get_page(url)
-    print(f"web data => {r.get(f'response:{url}')}")
+
+    print(f"web data => {r.get(f'{url}')}")
     print(f"call count => {r.get(f'count:{url}')}")
     print(f"\nSleeping for {DELAY} seconds...")
     print(f"Waiting for cache to expire...\n")
 
+    # Start a thread to make requests during sleep
+    thread = threading.Thread(target=request_during_sleep, args=(url, DELAY))
+    thread.daemon = True
+    thread.start()
+
     sleep(DELAY)  # Wait for the cache to expire
 
+    # Wait for thread to complete
+    thread.join()
+
     print(f"After {DELAY} seconds:\n")
-    print(f"web data => {r.get(f'response:{url}')}")
+    print(f"web data => {r.get(f'{url}')}")
     print(f"call count => {r.get(f'count:{url}')}")
 
     r.flushall()  # Clear the Redis database for cleanup
