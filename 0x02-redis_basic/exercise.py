@@ -4,7 +4,21 @@ Writing strings to Redis
 """
 
 from uuid import uuid4
+from functools import wraps
+from typing import Callable, Any
 import redis
+
+
+def count_calls(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to count calls to a function."""
+
+    @wraps(fn)
+    def wrapper(self, *args: Any, **kwargs: Any):
+        key = fn.__qualname__
+        self._redis.incr(key)
+        return fn(self, *args, **kwargs)
+
+    return wrapper
 
 
 class Cache:
@@ -14,6 +28,7 @@ class Cache:
         """Initialize the Cache with a Redis connection"""
         self._redis = redis.Redis()
 
+    @count_calls
     def store(self, data: bytes) -> str:
         """Store data in Redis and return the key"""
         key = uuid4().__str__()
@@ -26,6 +41,7 @@ class Cache:
 
     def get(self, key: str, fn=None):
         """Retrieve data from Redis and apply a function if provided"""
+        # print(f"Retrieving key: {key}")
         data = self._redis.get(key)
         if data is None:
             return None
@@ -33,16 +49,19 @@ class Cache:
             return fn(data)
         return data
 
-    def get_str(self, key: str) -> str:
-        """Retrieve a string from Redis"""
-        data = self._redis.get(key)
-        if data is None:
+    def get_str(self, key: str, fn=None) -> str:
+        """Retrieve a string from Redis using get with decode."""
+        result = self.get(key, fn)
+        if result is None:
             return ""
-        return str(data.decode("utf-8"))
+        if isinstance(result, bytes):
+            return result.decode("utf-8")
+        if isinstance(result, str):
+            return result
 
-    def get_int(self, key: str) -> int:
-        """Retrieve an integer from Redis"""
-        data = self._redis.get(key)
-        if data is None:
-            return 0
-        return int(data.decode("utf-8"))
+    def get_int(self, key: str, fn=None) -> int:
+        """Retrieve an integer from Redis using get with int conversion."""
+        result = self.get(key, fn)
+        if result is not None and isinstance(result, int):
+            return int(result)
+        return 0
